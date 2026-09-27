@@ -74,15 +74,19 @@ class GameObject:
 
     def draw(self):
         """Метод для отрисовки игрового объекта."""
-        raise NotImplementedError
+        # Добавил сообщение с названием класса,
+        # чтобы при ошибке было понятно, где метод не переопределён.
+        raise NotImplementedError(
+            f'Метод draw не переопределён в классе '
+            f'{self.__class__.__name__}.'
+        )
 
     def draw_cell(self, position, color=None):
         """Отрисовывает одну клетку игрового объекта."""
         # Вынес общую отрисовку клетки сюда,
         # чтобы не повторять один и тот же код
         # в Apple и Snake.
-        if color is None:
-            color = self.body_color
+        color = color or self.body_color
 
         rect = pg.Rect(
             position,
@@ -100,8 +104,14 @@ class GameObject:
 class Apple(GameObject):
     """Класс яблока."""
 
-    def __init__(self, occupied_positions=()):
-        super().__init__(body_color=APPLE_COLOR)
+    def __init__(
+        self,
+        occupied_positions=(),
+        body_color=APPLE_COLOR
+    ):
+        # Добавил параметр цвета с дефолтным значением,
+        # чтобы цвет яблока можно было изменить при создании.
+        super().__init__(body_color=body_color)
 
         # Передаю позиции змейки, чтобы яблоко
         # не появилось внутри неё.
@@ -110,15 +120,15 @@ class Apple(GameObject):
     def randomize_position(self, occupied_positions=()):
         """Выбирает свободную позицию для яблока."""
         while True:
-            position = (
+            # Сразу записываю новую позицию в атрибут объекта.
+            self.position = (
                 randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             )
 
             # Проверяю, что выбранная клетка свободна.
-            if position not in occupied_positions:
-                self.position = position
-                return
+            if self.position not in occupied_positions:
+                break
 
     def draw(self):
         """Отрисовывает яблоко."""
@@ -141,7 +151,11 @@ class Snake(GameObject):
         )
 
         self.length = 1
-        self.positions = [position]
+
+        # Использую self.position, который уже создал
+        # базовый класс GameObject.
+        self.positions = [self.position]
+
         self.direction = RIGHT
         self.last = None
 
@@ -164,8 +178,9 @@ class Snake(GameObject):
         )
 
         self.positions.insert(0, new_head)
-        self.position = new_head
 
+        # Не меняю self.position: текущие позиции змейки
+        # хранятся в self.positions.
         # Удаляю хвост, если сегментов стало больше,
         # чем должна иметь змейка.
         if len(self.positions) > self.length:
@@ -175,10 +190,10 @@ class Snake(GameObject):
 
     def reset(self):
         """Возвращает змейку в начальное состояние."""
-        # Возвращаю змейку в начальное положение.
-        self.position = INITIAL_SNAKE_POSITION
+        # self.position сохраняет начальную позицию,
+        # поэтому повторно задавать её здесь не нужно.
         self.length = 1
-        self.positions = [INITIAL_SNAKE_POSITION]
+        self.positions = [self.position]
         self.direction = RIGHT
         self.last = None
 
